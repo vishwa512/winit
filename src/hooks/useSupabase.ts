@@ -1,41 +1,65 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Database } from '../lib/supabase';
+import type { Template, Audit, User, AuditAssignment } from '../types';
 
 type Tables = Database['public']['Tables'];
-type Template = Tables['templates']['Row'];
+type TemplateRow = Tables['templates']['Row'];
 type TemplateInsert = Tables['templates']['Insert'];
 type TemplateUpdate = Tables['templates']['Update'];
-type User = Tables['users']['Row'];
-type Audit = Tables['audits']['Row'];
+type AuditRow = Tables['audits']['Row'];
+type AuditInsert = Tables['audits']['Insert'];
+type AuditUpdate = Tables['audits']['Update'];
+type UserRow = Tables['users']['Row'];
 
 export const useSupabase = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const handleError = (err: any) => {
+    console.error('Supabase error:', err);
+    setError(err instanceof Error ? err.message : 'An error occurred');
+  };
+
   // Template CRUD operations
-  const createTemplate = async (template: TemplateInsert): Promise<Template | null> => {
+  const createTemplate = async (template: Omit<Template, 'id' | 'created_at' | 'updated_at'>): Promise<TemplateRow | null> => {
     setLoading(true);
     setError(null);
     
     try {
+      const templateData: TemplateInsert = {
+        name: template.name,
+        description: template.description,
+        category: template.category,
+        sections: template.sections || [],
+        logic_rules: template.logic_rules || [],
+        scoring_rules: template.scoring_rules || {
+          isEnabled: false,
+          weights: {},
+          threshold: 80,
+          criticalQuestions: [],
+        },
+        created_by: '550e8400-e29b-41d4-a716-446655440000', // Mock user ID
+        is_published: template.is_published || false,
+      };
+
       const { data, error } = await supabase
         .from('templates')
-        .insert(template)
+        .insert(templateData)
         .select()
         .single();
 
       if (error) throw error;
       return data;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      handleError(err);
       return null;
     } finally {
       setLoading(false);
     }
   };
 
-  const getTemplates = async (): Promise<Template[]> => {
+  const getTemplates = async (): Promise<TemplateRow[]> => {
     setLoading(true);
     setError(null);
     
@@ -48,14 +72,14 @@ export const useSupabase = () => {
       if (error) throw error;
       return data || [];
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      handleError(err);
       return [];
     } finally {
       setLoading(false);
     }
   };
 
-  const getTemplate = async (id: string): Promise<Template | null> => {
+  const getTemplate = async (id: string): Promise<TemplateRow | null> => {
     setLoading(true);
     setError(null);
     
@@ -69,21 +93,31 @@ export const useSupabase = () => {
       if (error) throw error;
       return data;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      handleError(err);
       return null;
     } finally {
       setLoading(false);
     }
   };
 
-  const updateTemplate = async (id: string, updates: TemplateUpdate): Promise<Template | null> => {
+  const updateTemplate = async (id: string, updates: Partial<Template>): Promise<TemplateRow | null> => {
     setLoading(true);
     setError(null);
     
     try {
+      const updateData: TemplateUpdate = {
+        name: updates.name,
+        description: updates.description,
+        category: updates.category,
+        sections: updates.sections,
+        logic_rules: updates.logic_rules,
+        scoring_rules: updates.scoring_rules,
+        is_published: updates.is_published,
+      };
+
       const { data, error } = await supabase
         .from('templates')
-        .update(updates)
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
@@ -91,7 +125,7 @@ export const useSupabase = () => {
       if (error) throw error;
       return data;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      handleError(err);
       return null;
     } finally {
       setLoading(false);
@@ -111,7 +145,7 @@ export const useSupabase = () => {
       if (error) throw error;
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      handleError(err);
       return false;
     } finally {
       setLoading(false);
@@ -122,29 +156,41 @@ export const useSupabase = () => {
     return updateTemplate(id, { is_published: true }).then(result => !!result);
   };
 
-  // User operations
-  const getUsers = async (): Promise<User[]> => {
+  // Audit CRUD operations
+  const createAudit = async (audit: Omit<Audit, 'id' | 'created_at' | 'updated_at'>): Promise<AuditRow | null> => {
     setLoading(true);
     setError(null);
     
     try {
+      const auditData: AuditInsert = {
+        template_id: audit.template_id,
+        template_name: audit.template_name,
+        status: audit.status || 'pending',
+        assigned_to: audit.assigned_to,
+        assigned_to_name: audit.assigned_to_name,
+        location: audit.location || {},
+        responses: audit.responses || {},
+        score: audit.score,
+        compliance_status: audit.compliance_status,
+      };
+
       const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from('audits')
+        .insert(auditData)
+        .select()
+        .single();
 
       if (error) throw error;
-      return data || [];
+      return data;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      return [];
+      handleError(err);
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
-  // Audit operations
-  const getAudits = async (): Promise<Audit[]> => {
+  const getAudits = async (): Promise<AuditRow[]> => {
     setLoading(true);
     setError(null);
     
@@ -157,7 +203,172 @@ export const useSupabase = () => {
       if (error) throw error;
       return data || [];
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      handleError(err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAudit = async (id: string): Promise<AuditRow | null> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('audits')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      handleError(err);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateAudit = async (id: string, updates: Partial<Audit>): Promise<AuditRow | null> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const updateData: AuditUpdate = {
+        status: updates.status,
+        responses: updates.responses,
+        score: updates.score,
+        compliance_status: updates.compliance_status,
+        submitted_at: updates.submitted_at,
+      };
+
+      const { data, error } = await supabase
+        .from('audits')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      handleError(err);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteAudit = async (id: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase
+        .from('audits')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      handleError(err);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // User operations
+  const getUsers = async (): Promise<UserRow[]> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      handleError(err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createUser = async (user: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<UserRow | null> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          assigned_regions: user.assigned_regions || [],
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      handleError(err);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Audit Assignment operations
+  const createAuditAssignment = async (assignment: Omit<AuditAssignment, 'id' | 'created_at'>): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase
+        .from('audit_assignments')
+        .insert({
+          template_id: assignment.template_id,
+          assigned_to: assignment.assigned_to,
+          assigned_by: assignment.assigned_by,
+          location: assignment.location,
+          due_date: assignment.due_date,
+          status: assignment.status || 'assigned',
+        });
+
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      handleError(err);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAuditAssignments = async (): Promise<any[]> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('audit_assignments')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      handleError(err);
       return [];
     } finally {
       setLoading(false);
@@ -174,9 +385,17 @@ export const useSupabase = () => {
     updateTemplate,
     deleteTemplate,
     publishTemplate,
+    // Audit operations
+    createAudit,
+    getAudits,
+    getAudit,
+    updateAudit,
+    deleteAudit,
     // User operations
     getUsers,
-    // Audit operations
-    getAudits,
+    createUser,
+    // Audit Assignment operations
+    createAuditAssignment,
+    getAuditAssignments,
   };
 };

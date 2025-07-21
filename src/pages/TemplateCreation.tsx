@@ -5,45 +5,11 @@ import { v4 as uuidv4 } from 'uuid';
 import TemplateSetup from '../components/template/TemplateSetup';
 import SectionDefinition from '../components/template/SectionDefinition';
 import QuestionBuilder from '../components/template/QuestionBuilder';
+import LogicConfiguration from '../components/template/LogicConfiguration';
 import ScoringPublish from '../components/template/ScoringPublish';
 import ProgressIndicator from '../components/template/ProgressIndicator';
 import { ChevronLeft, Save, Loader2 } from 'lucide-react';
-
-interface Template {
-  id?: string;
-  name: string;
-  description: string;
-  category: string;
-  sections: Section[];
-  scoring_rules: ScoringRules;
-  created_by?: string;
-  is_published?: boolean;
-}
-
-interface Section {
-  id: string;
-  title: string;
-  description?: string;
-  order: number;
-  questions: Question[];
-}
-
-interface Question {
-  id: string;
-  text: string;
-  type: 'text' | 'numeric' | 'single_choice' | 'multiple_choice' | 'dropdown' | 'date' | 'file_upload' | 'barcode';
-  options?: string[];
-  validation_rules: any;
-  is_mandatory: boolean;
-  weight?: number;
-}
-
-interface ScoringRules {
-  isEnabled: boolean;
-  weights: Record<string, number>;
-  threshold: number;
-  criticalQuestions: string[];
-}
+import type { Template, Section, Question, LogicRule, ScoringRules } from '../types';
 
 const TemplateCreation: React.FC = () => {
   const navigate = useNavigate();
@@ -56,12 +22,14 @@ const TemplateCreation: React.FC = () => {
     description: '',
     category: '',
     sections: [],
+    logic_rules: [],
     scoring_rules: {
       isEnabled: false,
       weights: {},
       threshold: 80,
       criticalQuestions: [],
     },
+    is_published: false,
   });
 
   const isEditing = Boolean(id);
@@ -81,6 +49,7 @@ const TemplateCreation: React.FC = () => {
         description: data.description,
         category: data.category,
         sections: data.sections || [],
+        logic_rules: data.logic_rules || [],
         scoring_rules: data.scoring_rules || {
           isEnabled: false,
           weights: {},
@@ -97,11 +66,12 @@ const TemplateCreation: React.FC = () => {
     { number: 1, title: 'Template Setup', description: 'Basic information' },
     { number: 2, title: 'Define Sections', description: 'Organize your audit' },
     { number: 3, title: 'Add Questions', description: 'Build your questions' },
-    { number: 4, title: 'Scoring & Publish', description: 'Finalize template' },
+    { number: 4, title: 'Configure Logic', description: 'Set conditional rules' },
+    { number: 5, title: 'Scoring & Publish', description: 'Finalize template' },
   ];
 
   const handleNext = () => {
-    if (currentStep < 4) {
+    if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -115,27 +85,11 @@ const TemplateCreation: React.FC = () => {
   const handleSaveDraft = async () => {
     setSaving(true);
     try {
-      const templateData = {
-        name: template.name || 'Untitled Template',
-        description: template.description || '',
-        category: template.category || 'General',
-        sections: template.sections || [],
-        scoring_rules: template.scoring_rules || {
-          isEnabled: false,
-          weights: {},
-          threshold: 80,
-          criticalQuestions: [],
-        },
-        created_by: 'current-user-id', // This should come from auth
-        is_published: false,
-      };
-
       if (isEditing && id) {
-        await updateTemplate(id, templateData);
+        await updateTemplate(id, { ...template, is_published: false });
       } else {
-        await createTemplate(templateData);
+        await createTemplate({ ...template, is_published: false });
       }
-
       navigate('/templates');
     } catch (error) {
       console.error('Error saving template:', error);
@@ -147,27 +101,11 @@ const TemplateCreation: React.FC = () => {
   const handlePublish = async () => {
     setSaving(true);
     try {
-      const templateData = {
-        name: template.name || 'Untitled Template',
-        description: template.description || '',
-        category: template.category || 'General',
-        sections: template.sections || [],
-        scoring_rules: template.scoring_rules || {
-          isEnabled: false,
-          weights: {},
-          threshold: 80,
-          criticalQuestions: [],
-        },
-        created_by: 'current-user-id', // This should come from auth
-        is_published: true,
-      };
-
       if (isEditing && id) {
-        await updateTemplate(id, templateData);
+        await updateTemplate(id, { ...template, is_published: true });
       } else {
-        await createTemplate(templateData);
+        await createTemplate({ ...template, is_published: true });
       }
-
       navigate('/templates');
     } catch (error) {
       console.error('Error publishing template:', error);
@@ -206,6 +144,15 @@ const TemplateCreation: React.FC = () => {
         );
       case 4:
         return (
+          <LogicConfiguration
+            template={template}
+            onUpdate={setTemplate}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+          />
+        );
+      case 5:
+        return (
           <ScoringPublish
             template={template}
             onUpdate={setTemplate}
@@ -231,7 +178,7 @@ const TemplateCreation: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
           <button
             onClick={() => navigate('/templates')}

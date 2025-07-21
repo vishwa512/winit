@@ -4,6 +4,8 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Templates from './pages/Templates';
 import TemplateCreation from './pages/TemplateCreation';
+import AuditExecution from './pages/AuditExecution';
+import Reports from './pages/Reports';
 import Users from './pages/Users';
 
 function App() {
@@ -16,6 +18,9 @@ function App() {
           <Route path="/templates" element={<Templates />} />
           <Route path="/templates/create" element={<TemplateCreation />} />
           <Route path="/templates/edit/:id" element={<TemplateCreation />} />
+          <Route path="/audits" element={<AuditExecution />} />
+          <Route path="/audits/:id" element={<AuditExecution />} />
+          <Route path="/reports" element={<Reports />} />
           <Route path="/users" element={<Users />} />
         </Routes>
       </Layout>

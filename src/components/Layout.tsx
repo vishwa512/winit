@@ -3,6 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   FileText,
+  ClipboardCheck,
+  BarChart3,
   Users,
   Menu,
   X,
@@ -21,6 +23,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Templates', href: '/templates', icon: FileText },
+    { name: 'Audits', href: '/audits', icon: ClipboardCheck },
+    { name: 'Reports', href: '/reports', icon: BarChart3 },
     { name: 'Users', href: '/users', icon: Users },
   ];
 
