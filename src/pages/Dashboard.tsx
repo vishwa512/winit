@@ -23,7 +23,7 @@ import {
 import { Link } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
-  const { getTemplates, getAudits, getUsers, loading, error } = useSupabase();
+  const { getTemplates, getAudits, getProfiles, loading, error } = useSupabase();
   const [templates, setTemplates] = useState<any[]>([]);
   const [audits, setAudits] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -49,7 +49,7 @@ const Dashboard: React.FC = () => {
       const [templatesData, auditsData, usersData] = await Promise.all([
         getTemplates(),
         getAudits(),
-        getUsers(),
+        getProfiles(),
       ]);
 
       setTemplates(templatesData);
