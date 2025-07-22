@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import type { Database } from '../lib/supabase';
-import type { Template, Audit, User, AuditAssignment } from '../types';
+import type { Template, Audit, AuditAssignment } from '../types';
 
 type Tables = Database['public']['Tables'];
 type TemplateRow = Tables['templates']['Row'];
@@ -10,11 +11,12 @@ type TemplateUpdate = Tables['templates']['Update'];
 type AuditRow = Tables['audits']['Row'];
 type AuditInsert = Tables['audits']['Insert'];
 type AuditUpdate = Tables['audits']['Update'];
-type UserRow = Tables['users']['Row'];
+type ProfileRow = Tables['profiles']['Row'];
 
 export const useSupabase = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const handleError = (err: any) => {
     console.error('Supabase error:', err);
@@ -22,14 +24,19 @@ export const useSupabase = () => {
   };
 
   // Template CRUD operations
-  const createTemplate = async (template: Omit<Template, 'id' | 'created_at' | 'updated_at'>): Promise<TemplateRow | null> => {
+  const createTemplate = async (template: Omit<Template, 'id' | 'created_at' | 'updated_at' | 'created_by'>): Promise<TemplateRow | null> => {
+    if (!user) {
+      setError('User not authenticated');
+      return null;
+    }
+
     setLoading(true);
     setError(null);
     
     try {
       const templateData: TemplateInsert = {
         name: template.name,
-        description: template.description,
+        description: template.description || '',
         category: template.category,
         sections: template.sections || [],
         logic_rules: template.logic_rules || [],
@@ -39,7 +46,7 @@ export const useSupabase = () => {
           threshold: 80,
           criticalQuestions: [],
         },
-        created_by: '550e8400-e29b-41d4-a716-446655440000', // Mock user ID
+        created_by: user.id,
         is_published: template.is_published || false,
       };
 
@@ -113,6 +120,7 @@ export const useSupabase = () => {
         logic_rules: updates.logic_rules,
         scoring_rules: updates.scoring_rules,
         is_published: updates.is_published,
+        updated_at: new Date().toISOString(),
       };
 
       const { data, error } = await supabase
@@ -242,6 +250,7 @@ export const useSupabase = () => {
         score: updates.score,
         compliance_status: updates.compliance_status,
         submitted_at: updates.submitted_at,
+        updated_at: new Date().toISOString(),
       };
 
       const { data, error } = await supabase
@@ -281,87 +290,14 @@ export const useSupabase = () => {
     }
   };
 
-  // User operations
-  const getUsers = async (): Promise<UserRow[]> => {
+  // Profile operations
+  const getProfiles = async (): Promise<ProfileRow[]> => {
     setLoading(true);
     setError(null);
     
     try {
       const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    } catch (err) {
-      handleError(err);
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createUser = async (user: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<UserRow | null> => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .insert({
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          assigned_regions: user.assigned_regions || [],
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (err) {
-      handleError(err);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Audit Assignment operations
-  const createAuditAssignment = async (assignment: Omit<AuditAssignment, 'id' | 'created_at'>): Promise<boolean> => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const { error } = await supabase
-        .from('audit_assignments')
-        .insert({
-          template_id: assignment.template_id,
-          assigned_to: assignment.assigned_to,
-          assigned_by: assignment.assigned_by,
-          location: assignment.location,
-          due_date: assignment.due_date,
-          status: assignment.status || 'assigned',
-        });
-
-      if (error) throw error;
-      return true;
-    } catch (err) {
-      handleError(err);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getAuditAssignments = async (): Promise<any[]> => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const { data, error } = await supabase
-        .from('audit_assignments')
+        .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -391,11 +327,7 @@ export const useSupabase = () => {
     getAudit,
     updateAudit,
     deleteAudit,
-    // User operations
-    getUsers,
-    createUser,
-    // Audit Assignment operations
-    createAuditAssignment,
-    getAuditAssignments,
+    // Profile operations
+    getProfiles,
   };
 };

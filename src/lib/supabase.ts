@@ -4,7 +4,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+  throw new Error('Missing Supabase environment variables. Please check your .env file.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -13,7 +13,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export interface Database {
   public: {
     Tables: {
-      users: {
+      profiles: {
         Row: {
           id: string;
           email: string;
@@ -22,17 +22,15 @@ export interface Database {
           assigned_regions: string[];
           created_at: string;
           updated_at: string;
-          last_login: string | null;
         };
         Insert: {
-          id?: string;
+          id: string;
           email: string;
           name: string;
           role?: 'admin' | 'supervisor' | 'auditor';
           assigned_regions?: string[];
           created_at?: string;
           updated_at?: string;
-          last_login?: string | null;
         };
         Update: {
           id?: string;
@@ -42,7 +40,6 @@ export interface Database {
           assigned_regions?: string[];
           created_at?: string;
           updated_at?: string;
-          last_login?: string | null;
         };
       };
       templates: {
@@ -52,7 +49,9 @@ export interface Database {
           description: string;
           category: string;
           sections: any[];
+          logic_rules: any[];
           scoring_rules: any;
+          version: number;
           created_by: string;
           created_at: string;
           updated_at: string;
@@ -64,7 +63,9 @@ export interface Database {
           description?: string;
           category: string;
           sections?: any[];
+          logic_rules?: any[];
           scoring_rules?: any;
+          version?: number;
           created_by: string;
           created_at?: string;
           updated_at?: string;
@@ -76,7 +77,9 @@ export interface Database {
           description?: string;
           category?: string;
           sections?: any[];
+          logic_rules?: any[];
           scoring_rules?: any;
+          version?: number;
           created_by?: string;
           created_at?: string;
           updated_at?: string;
@@ -94,6 +97,7 @@ export interface Database {
           location: any;
           responses: any;
           score: number | null;
+          compliance_status: 'compliant' | 'non_compliant' | 'pending' | null;
           submitted_at: string | null;
           created_at: string;
           updated_at: string;
@@ -108,6 +112,7 @@ export interface Database {
           location?: any;
           responses?: any;
           score?: number | null;
+          compliance_status?: 'compliant' | 'non_compliant' | 'pending' | null;
           submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -122,6 +127,7 @@ export interface Database {
           location?: any;
           responses?: any;
           score?: number | null;
+          compliance_status?: 'compliant' | 'non_compliant' | 'pending' | null;
           submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;

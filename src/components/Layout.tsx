@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard,
   FileText,
   ClipboardCheck,
-  BarChart3,
   Users,
   Menu,
   X,
-  Settings,
   ClipboardList,
+  LogOut,
+  User,
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -19,17 +20,21 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const { profile, signOut } = useAuth();
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Templates', href: '/templates', icon: FileText },
     { name: 'Audits', href: '/audits', icon: ClipboardCheck },
-    { name: 'Reports', href: '/reports', icon: BarChart3 },
     { name: 'Users', href: '/users', icon: Users },
   ];
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (
@@ -93,13 +98,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-200">
-          <Link
-            to="/settings"
-            className="group flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors duration-200"
+          <button
+            onClick={handleSignOut}
+            className="w-full group flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors duration-200"
           >
-            <Settings className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-600" />
-            Settings
-          </Link>
+            <LogOut className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-600" />
+            Sign Out
+          </button>
         </div>
       </div>
 
@@ -120,11 +125,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="flex items-center gap-x-4 lg:gap-x-6">
               <div className="flex items-center space-x-3">
                 <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">AU</span>
+                  <User className="h-4 w-4 text-white" />
                 </div>
                 <div className="hidden sm:block">
-                  <div className="text-sm font-medium text-gray-900">Admin User</div>
-                  <div className="text-xs text-gray-500">Administrator</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {profile?.name || 'User'}
+                  </div>
+                  <div className="text-xs text-gray-500 capitalize">
+                    {profile?.role || 'auditor'}
+                  </div>
                 </div>
               </div>
             </div>

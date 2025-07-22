@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSupabase } from '../hooks/useSupabase';
+import { useAuth } from '../contexts/AuthContext';
 import { v4 as uuidv4 } from 'uuid';
 import TemplateSetup from '../components/template/TemplateSetup';
 import SectionDefinition from '../components/template/SectionDefinition';
 import QuestionBuilder from '../components/template/QuestionBuilder';
-import LogicConfiguration from '../components/template/LogicConfiguration';
 import ScoringPublish from '../components/template/ScoringPublish';
 import ProgressIndicator from '../components/template/ProgressIndicator';
 import { ChevronLeft, Save, Loader2 } from 'lucide-react';
@@ -15,6 +15,7 @@ const TemplateCreation: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { getTemplate, createTemplate, updateTemplate, loading } = useSupabase();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [template, setTemplate] = useState<Template>({
@@ -63,15 +64,14 @@ const TemplateCreation: React.FC = () => {
   };
 
   const steps = [
-    { number: 1, title: 'Template Setup', description: 'Basic information' },
-    { number: 2, title: 'Define Sections', description: 'Organize your audit' },
-    { number: 3, title: 'Add Questions', description: 'Build your questions' },
-    { number: 4, title: 'Configure Logic', description: 'Set conditional rules' },
-    { number: 5, title: 'Scoring & Publish', description: 'Finalize template' },
+    { number: 1, title: 'Setup', description: 'Basic information' },
+    { number: 2, title: 'Sections', description: 'Organize your audit' },
+    { number: 3, title: 'Questions', description: 'Build your questions' },
+    { number: 4, title: 'Publish', description: 'Finalize template' },
   ];
 
   const handleNext = () => {
-    if (currentStep < 5) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -83,6 +83,11 @@ const TemplateCreation: React.FC = () => {
   };
 
   const handleSaveDraft = async () => {
+    if (!user) {
+      alert('You must be logged in to save templates');
+      return;
+    }
+
     setSaving(true);
     try {
       if (isEditing && id) {
@@ -93,12 +98,18 @@ const TemplateCreation: React.FC = () => {
       navigate('/templates');
     } catch (error) {
       console.error('Error saving template:', error);
+      alert('Error saving template. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
   const handlePublish = async () => {
+    if (!user) {
+      alert('You must be logged in to publish templates');
+      return;
+    }
+
     setSaving(true);
     try {
       if (isEditing && id) {
@@ -109,6 +120,7 @@ const TemplateCreation: React.FC = () => {
       navigate('/templates');
     } catch (error) {
       console.error('Error publishing template:', error);
+      alert('Error publishing template. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -143,15 +155,6 @@ const TemplateCreation: React.FC = () => {
           />
         );
       case 4:
-        return (
-          <LogicConfiguration
-            template={template}
-            onUpdate={setTemplate}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          />
-        );
-      case 5:
         return (
           <ScoringPublish
             template={template}
