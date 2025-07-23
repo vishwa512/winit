@@ -13,7 +13,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export interface Database {
   public: {
     Tables: {
-      profiles: {
+      users: {
         Row: {
           id: string;
           email: string;
@@ -22,15 +22,17 @@ export interface Database {
           assigned_regions: string[];
           created_at: string;
           updated_at: string;
+          last_login: string | null;
         };
         Insert: {
-          id: string;
+          id?: string;
           email: string;
           name: string;
           role?: 'admin' | 'supervisor' | 'auditor';
           assigned_regions?: string[];
           created_at?: string;
           updated_at?: string;
+          last_login?: string | null;
         };
         Update: {
           id?: string;
@@ -40,6 +42,7 @@ export interface Database {
           assigned_regions?: string[];
           created_at?: string;
           updated_at?: string;
+          last_login?: string | null;
         };
       };
       templates: {

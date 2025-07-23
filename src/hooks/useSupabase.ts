@@ -11,7 +11,7 @@ type TemplateUpdate = Tables['templates']['Update'];
 type AuditRow = Tables['audits']['Row'];
 type AuditInsert = Tables['audits']['Insert'];
 type AuditUpdate = Tables['audits']['Update'];
-type ProfileRow = Tables['profiles']['Row'];
+type UserRow = Tables['users']['Row'];
 
 export const useSupabase = () => {
   const [loading, setLoading] = useState(false);
@@ -290,14 +290,14 @@ export const useSupabase = () => {
     }
   };
 
-  // Profile operations
-  const getProfiles = async (): Promise<ProfileRow[]> => {
+  // User operations
+  const getUsers = async (): Promise<UserRow[]> => {
     setLoading(true);
     setError(null);
     
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('users')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -327,7 +327,7 @@ export const useSupabase = () => {
     getAudit,
     updateAudit,
     deleteAudit,
-    // Profile operations
-    getProfiles,
+    // User operations
+    getUsers,
   };
 };

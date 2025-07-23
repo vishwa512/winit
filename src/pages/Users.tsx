@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useSupabase } from '../hooks/useSupabase';
 import {
   Plus,
   Edit,
@@ -13,6 +12,7 @@ import {
   MapPin,
   Loader2,
 } from 'lucide-react';
+import { useSupabase } from '../hooks/useSupabase';
 
 const Users: React.FC = () => {
   const { getUsers, loading, error } = useSupabase();

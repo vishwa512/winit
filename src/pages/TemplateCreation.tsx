@@ -84,7 +84,7 @@ const TemplateCreation: React.FC = () => {
 
   const handleSaveDraft = async () => {
     if (!user) {
-      alert('You must be logged in to save templates');
+      setError('You must be logged in to save templates');
       return;
     }
 
@@ -98,7 +98,7 @@ const TemplateCreation: React.FC = () => {
       navigate('/templates');
     } catch (error) {
       console.error('Error saving template:', error);
-      alert('Error saving template. Please try again.');
+      setError('Error saving template. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -106,7 +106,7 @@ const TemplateCreation: React.FC = () => {
 
   const handlePublish = async () => {
     if (!user) {
-      alert('You must be logged in to publish templates');
+      setError('You must be logged in to publish templates');
       return;
     }
 
@@ -120,7 +120,7 @@ const TemplateCreation: React.FC = () => {
       navigate('/templates');
     } catch (error) {
       console.error('Error publishing template:', error);
-      alert('Error publishing template. Please try again.');
+      setError('Error publishing template. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -179,21 +179,21 @@ const TemplateCreation: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+    <div className="max-w-6xl mx-auto space-y-3 sm:space-y-4 lg:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           <button
             onClick={() => navigate('/templates')}
             className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <div>
+          <div className="min-w-0 flex-1">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
               {isEditing ? 'Edit Template' : 'Create New Template'}
             </h1>
-            <p className="text-gray-600 mt-1 text-sm sm:text-base">
+            <p className="text-gray-600 mt-1 text-sm sm:text-base line-clamp-1">
               {steps[currentStep - 1]?.description}
             </p>
           </div>
@@ -201,22 +201,30 @@ const TemplateCreation: React.FC = () => {
         <button
           onClick={handleSaveDraft}
           disabled={saving}
-          className="inline-flex items-center px-3 py-2 sm:px-4 sm:py-2 text-gray-700 bg-gray-100 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors duration-200 disabled:opacity-50"
+          className="inline-flex items-center justify-center px-3 py-2 sm:px-4 sm:py-2 text-gray-700 bg-gray-100 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors duration-200 disabled:opacity-50 whitespace-nowrap"
         >
           {saving ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           ) : (
             <Save className="w-4 h-4 mr-2" />
           )}
-          Save Draft
+          <span className="hidden sm:inline">Save Draft</span>
+          <span className="sm:hidden">Save</span>
         </button>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800 text-sm">{error}</p>
+        </div>
+      )}
 
       {/* Progress Indicator */}
       <ProgressIndicator steps={steps} currentStep={currentStep} />
 
       {/* Step Content */}
-      <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200">
+      <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {renderStepContent()}
       </div>
     </div>
